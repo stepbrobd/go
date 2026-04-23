@@ -355,6 +355,12 @@ func init() {
 		{name: "MOVFD", argLength: 1, reg: fp11, asm: "MOVFD"},     // float32 -> float64
 		{name: "MOVDF", argLength: 1, reg: fp11, asm: "MOVDF"},     // float64 -> float32
 
+		// 64-bit floating-point round to integers in 64-bit FP format
+		{name: "FRINTND", argLength: 1, reg: fp11, asm: "VFRINTRNED"}, // Round (ties to even; ; 0.5 -> 0, 1.5 -> 2)
+		{name: "FRINTMD", argLength: 1, reg: fp11, asm: "VFRINTRMD"},  // Floor (towards Minus; 0.5 -> 0, -0.5 -> -1)
+		{name: "FRINTPD", argLength: 1, reg: fp11, asm: "VFRINTRPD"},  // Ceil (towards Positive; 0.5 -> 1, -0.5 -> 0)
+		{name: "FRINTZD", argLength: 1, reg: fp11, asm: "VFRINTRZD"},  // Trunc (towards Zero; 0.5 -> 0, -0.5 -> 0))
+
 		// Round ops to block fused-multiply-add extraction.
 		{name: "LoweredRound32F", argLength: 1, reg: fp11, resultInArg0: true},
 		{name: "LoweredRound64F", argLength: 1, reg: fp11, resultInArg0: true},
