@@ -43,6 +43,20 @@ func (e *escape) call(ks []hole, call ir.Node) {
 			// TODO(thepudds): use an ir.ReassignOracle here.
 			v := ir.StaticValue(call.Fun)
 			fn = ir.StaticCalleeName(v)
+			if fn == nil {
+				// If the variable is declared without an initializer
+				// and assigned exactly once, we can use that
+				// assignment to identify the callee. The only
+				// alternative value is the zero value (nil for
+				// func types), which panics on call and so can't
+				// cause any escape.
+				if name, ok := v.(*ir.Name); ok {
+					orig := name.Canonical()
+					if as := ir.FuncSingleAssignment(orig); as != nil {
+						fn = ir.StaticCalleeName(as.Y)
+					}
+				}
+			}
 		}
 
 		// argumentParam handles escape analysis of assigning a call
