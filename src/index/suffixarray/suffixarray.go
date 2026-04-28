@@ -143,9 +143,11 @@ func readSlice(r io.Reader, buf []byte, data ints) (n int, err error) {
 	len := data.len()
 	for p := binary.MaxVarintLen64; p < size; n++ {
 		x, w := binary.Uvarint(buf[p:])
-		// prevent index-out-of-bounds panic if there are more indices than expected
+		// - prevent index-out-of-bounds panic if there are more indices than expected
 		// (was go.dev/issue/53352)
-		if n >= len {
+		// - prevent index-out-of-bounds panic in a future Lookup
+		// by ensuring all indices x satisfy x < len
+		if n >= len || x >= uint64(len) {
 			return n, errCorrupted
 		}
 		data.set(n, int64(x))

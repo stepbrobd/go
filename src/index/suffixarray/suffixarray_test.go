@@ -659,6 +659,25 @@ func TestIssue53352(t *testing.T) {
 	// Reading back the corrupted encoding should report an error.
 	// Before fixing go.dev/issue/53352, this resulted in an index-out-of-range panic.
 	if err := index.Read(bytes.NewBuffer(encoding)); err != errCorrupted {
-		t.Fatalf("got %q; want %q", err, errCorrupted)
+		t.Fatalf("got %v; want %v", err, errCorrupted)
+	}
+}
+
+func TestIndexCorruption(t *testing.T) {
+	data := []byte("x")
+	index := New(data)
+	var buf bytes.Buffer
+	if err := index.Write(&buf); err != nil {
+		t.Fatal(err)
+	}
+
+	// The index data is at the end of the encoding (see TestIssue53352 for the encoding format).
+	// The encoded indices i must be 0 <= i < len(data) because they are used to index into the
+	// data. Corrupt one and make sure we get an error when reading the encoding.
+	buf.Bytes()[buf.Len()-1] = byte(len(data))
+
+	// Reading back the corrupted encoding should report an error.
+	if err := index.Read(&buf); err != errCorrupted {
+		t.Fatalf("got %v; want %v", err, errCorrupted)
 	}
 }
