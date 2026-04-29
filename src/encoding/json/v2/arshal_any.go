@@ -8,6 +8,7 @@ package json
 
 import (
 	"cmp"
+	"errors"
 	"math"
 	"reflect"
 	"slices"
@@ -90,9 +91,9 @@ func unmarshalValueAny(dec *jsontext.Decoder, uo *jsonopts.Struct) (any, error) 
 			if uo.Flags.Get(jsonflags.UnmarshalAnyWithRawNumber) {
 				return internal.RawNumberOf(val), nil
 			}
-			fv, ok := jsonwire.ParseFloat(val, 64)
-			if !ok {
-				return fv, newUnmarshalErrorAfterWithValue(dec, float64Type, strconv.ErrRange)
+			fv, err := strconv.ParseFloat(string(val), 64)
+			if err != nil {
+				return fv, newUnmarshalErrorAfterWithValue(dec, float64Type, errors.Unwrap(err))
 			}
 			return fv, nil
 		default:

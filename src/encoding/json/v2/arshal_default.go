@@ -718,10 +718,10 @@ func makeFloatArshaler(t reflect.Type) *arshaler {
 			if stringify && k == '0' {
 				break
 			}
-			fv, ok := jsonwire.ParseFloat(val, bits)
+			fv, err := strconv.ParseFloat(string(val), bits)
 			va.SetFloat(fv)
-			if !ok {
-				return newUnmarshalErrorAfterWithValue(dec, t, strconv.ErrRange)
+			if err != nil {
+				return newUnmarshalErrorAfterWithValue(dec, t, errors.Unwrap(err))
 			}
 			return nil
 		}

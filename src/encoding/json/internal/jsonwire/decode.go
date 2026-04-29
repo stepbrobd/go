@@ -604,26 +604,3 @@ func ParseUint(b []byte) (v uint64, ok bool) {
 	}
 	return v, true
 }
-
-// ParseFloat parses a floating point number according to the Go float grammar.
-// Note that the JSON number grammar is a strict subset.
-//
-// If the number overflows the finite representation of a float,
-// then we return MaxFloat since any finite value will always be infinitely
-// more accurate at representing another finite value than an infinite value.
-func ParseFloat(b []byte, bits int) (v float64, ok bool) {
-	fv, err := strconv.ParseFloat(string(b), bits)
-	if math.IsInf(fv, 0) {
-		switch {
-		case bits == 32 && math.IsInf(fv, +1):
-			fv = +math.MaxFloat32
-		case bits == 64 && math.IsInf(fv, +1):
-			fv = +math.MaxFloat64
-		case bits == 32 && math.IsInf(fv, -1):
-			fv = -math.MaxFloat32
-		case bits == 64 && math.IsInf(fv, -1):
-			fv = -math.MaxFloat64
-		}
-	}
-	return fv, err == nil
-}
