@@ -371,6 +371,9 @@ func MatchCaseSensitiveDelimiter(v bool) Options {
 //     the original Go value for array elements, slice elements,
 //     struct fields (but not map values),
 //     pointer values, and interface values (only if a non-nil pointer).
+//     For slices, it will merge into the pre-existing value of slice elements
+//     even for those past the slice length. If the original slice length
+//     was longer than the JSON array, then it is truncated to match.
 //     In contrast, the default v2 behavior is to merge into the Go value
 //     for struct fields, map values, pointer values, and interface values.
 //     In general, the v2 semantic merges when unmarshaling a JSON object,
