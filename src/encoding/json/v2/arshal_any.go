@@ -133,7 +133,7 @@ func marshalObjectAny(enc *jsontext.Encoder, obj map[string]any, mo *jsonopts.St
 	if err := enc.WriteToken(jsontext.BeginObject); err != nil {
 		return err
 	}
-	// A Go map guarantees that each entry has a unique key
+	// A Go map guarantees that each entry has a unique key.
 	// The only possibility of duplicates is due to invalid UTF-8.
 	if !mo.Flags.Get(jsonflags.AllowInvalidUTF8) {
 		xe.Tokens.Last.DisableNamespace()
@@ -181,7 +181,7 @@ func unmarshalObjectAny(dec *jsontext.Decoder, uo *jsonopts.Struct) (map[string]
 		panic("BUG: invalid kind: " + tok.Kind().String())
 	}
 	obj := make(map[string]any)
-	// A Go map guarantees that each entry has a unique key
+	// A Go map guarantees that each entry has a unique key.
 	// The only possibility of duplicates is due to invalid UTF-8.
 	if !uo.Flags.Get(jsonflags.AllowInvalidUTF8) {
 		export.Decoder(dec).Tokens.Last.DisableNamespace()

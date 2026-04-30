@@ -80,7 +80,7 @@ func makeStructFields(root reflect.Type) (fs structFields, serr *SemanticError) 
 		return cmp.Or(serr, &SemanticError{GoType: t, Err: fmt.Errorf(f, a...)})
 	}
 
-	// Setup a queue for a breath-first search.
+	// Setup a queue for a breadth-first search.
 	var queueIndex int
 	type queueEntry struct {
 		typ           reflect.Type
@@ -320,7 +320,7 @@ func makeStructFields(root reflect.Type) (fs structFields, serr *SemanticError) 
 	}
 	for foldedName, fields := range fs.byFoldedName {
 		if len(fields) > 1 {
-			// The precedence order for conflicting ignoreCase names
+			// The precedence order for conflicting case-insensitive names
 			// is by breadth-first order, rather than depth-first order.
 			slices.SortFunc(fields, func(x, y *structField) int {
 				return cmp.Compare(x.id, y.id)

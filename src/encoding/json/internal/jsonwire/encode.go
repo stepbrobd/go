@@ -235,7 +235,7 @@ func AppendFloat(dst []byte, src float64, bits int) []byte {
 	return dst
 }
 
-// ReformatNumber consumes a JSON string from src and appends it to dst,
+// ReformatNumber consumes a JSON number from src and appends it to dst,
 // canonicalizing it if specified.
 // It returns the appended output and the number of consumed input bytes.
 func ReformatNumber(dst, src []byte, flags *jsonflags.Flags) ([]byte, int, error) {

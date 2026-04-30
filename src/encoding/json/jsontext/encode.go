@@ -50,7 +50,7 @@ type Encoder struct {
 }
 
 // encoderState is the low-level state of Encoder.
-// It has exported fields and method for use by the "json" package.
+// It has exported fields and methods for use by the "json" package.
 type encoderState struct {
 	state
 	encodeBuffer
@@ -138,7 +138,7 @@ func (e *encoderState) reset(b []byte, w io.Writer, opts ...Options) {
 	}
 }
 
-// Options returns the options used to construct the decoder and
+// Options returns the options used to construct the encoder and
 // may additionally contain semantic options passed to a
 // [encoding/json/v2.MarshalEncode] call.
 //

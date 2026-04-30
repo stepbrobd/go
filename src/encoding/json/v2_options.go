@@ -282,7 +282,7 @@ func CallMethodsWithLegacySemantics(v bool) Options {
 }
 
 // FormatByteArrayAsArray specifies that a Go [N]byte is
-// formatted as as a normal Go array in contrast to the v2 default of
+// formatted as a normal Go array in contrast to the v2 default of
 // formatting [N]byte as using binary data encoding (RFC 4648).
 // If a struct field has a `format` tag option,
 // then the specified formatting takes precedence.

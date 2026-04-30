@@ -1033,7 +1033,7 @@ func makeMapArshaler(t reflect.Type) *arshaler {
 // mapKeyWithUniqueRepresentation reports whether all possible values of k
 // marshal to a different JSON value, and whether all possible JSON values
 // that can unmarshal into k unmarshal to different Go values.
-// In other words, the representation must be a bijective.
+// In other words, the representation must be a bijection.
 func mapKeyWithUniqueRepresentation(k reflect.Kind, allowInvalidUTF8 bool) bool {
 	switch k {
 	case reflect.Bool,
@@ -1042,7 +1042,7 @@ func mapKeyWithUniqueRepresentation(k reflect.Kind, allowInvalidUTF8 bool) bool 
 		return true
 	case reflect.String:
 		// For strings, we have to be careful since names with invalid UTF-8
-		// maybe unescape to the same Go string value.
+		// may unescape to the same Go string value.
 		return !allowInvalidUTF8
 	default:
 		// Floating-point kinds are not listed above since NaNs
@@ -1288,7 +1288,7 @@ func makeStructArshaler(t reflect.Type) *arshaler {
 								return err
 							}
 						} else {
-							// Marshal into value capable of storing arbitrary object members.
+							// Unmarshal into a value capable of storing arbitrary object members.
 							if err := unmarshalInlinedFallbackNext(dec, va, uo, fields.inlinedFallback, val, name); err != nil {
 								if isFatalError(err, uo.Flags) {
 									return err
@@ -1871,7 +1871,7 @@ func makeInterfaceArshaler(t reflect.Type) *arshaler {
 	return &fncs
 }
 
-// isAnyType reports wether t is equivalent to the any interface type.
+// isAnyType reports whether t is equivalent to the any interface type.
 func isAnyType(t reflect.Type) bool {
 	// This is forward compatible if the Go language permits type sets within
 	// ordinary interfaces where an interface with zero methods does not
