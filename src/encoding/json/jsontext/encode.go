@@ -471,7 +471,7 @@ func (e *encoderState) AppendRaw(k Kind, safeASCII bool, appendFn func([]byte) (
 		if !isVerbatim {
 			var err error
 			b2 := append(e.availBuffer, b[pos+len(`"`):len(b)-len(`"`)]...)
-			b, err = jsonwire.AppendQuote(b[:pos], string(b2), &e.Flags)
+			b, err = jsonwire.AppendQuote(b[:pos], b2, &e.Flags)
 			e.availBuffer = b2[:0]
 			if err != nil {
 				return wrapSyntacticError(e, err, pos, +1)

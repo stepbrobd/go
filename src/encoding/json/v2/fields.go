@@ -453,9 +453,9 @@ func parseFieldOptions(sf reflect.StructField) (out fieldOptions, ignored bool, 
 		}
 		tag = tag[n:]
 	}
-	b, _ := jsonwire.AppendQuote(nil, out.name, &jsonflags.Flags{})
+	b, _ := jsonwire.AppendQuote(nil, []byte(out.name), &jsonflags.Flags{})
 	out.quotedName = string(b)
-	out.nameNeedEscape = jsonwire.NeedEscape(out.name)
+	out.nameNeedEscape = jsonwire.NeedEscape([]byte(out.name))
 
 	// Handle any additional tag options (if any).
 	var wasFormat bool

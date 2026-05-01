@@ -208,7 +208,7 @@ func makeStringArshaler(t reflect.Type) *arshaler {
 		if optimizeCommon && !mo.Flags.Get(jsonflags.AnyWhitespace|jsonflags.StringifyBoolsAndStrings) && !xe.Tokens.Last.NeedObjectName() {
 			b := xe.Buf
 			b = xe.Tokens.MayAppendDelim(b, '"')
-			b, err := jsonwire.AppendQuote(b, s, &mo.Flags)
+			b, err := jsonwire.AppendQuote(b, []byte(s), &mo.Flags)
 			if err == nil {
 				xe.Buf = b
 				xe.Tokens.Last.Increment()
@@ -222,7 +222,7 @@ func makeStringArshaler(t reflect.Type) *arshaler {
 		}
 
 		if mo.Flags.Get(jsonflags.StringifyBoolsAndStrings) {
-			b, err := jsonwire.AppendQuote(nil, s, &mo.Flags)
+			b, err := jsonwire.AppendQuote(nil, []byte(s), &mo.Flags)
 			if err != nil {
 				return newMarshalErrorBefore(enc, t, &jsontext.SyntacticError{Err: err})
 			}
@@ -1148,7 +1148,7 @@ func makeStructArshaler(t reflect.Type) *arshaler {
 				if !f.nameNeedEscape {
 					b = append(b, f.quotedName...)
 				} else {
-					b, _ = jsonwire.AppendQuote(b, f.name, &mo.Flags)
+					b, _ = jsonwire.AppendQuote(b, []byte(f.name), &mo.Flags)
 				}
 				xe.Buf = b
 				xe.Names.ReplaceLastQuotedOffset(n0)

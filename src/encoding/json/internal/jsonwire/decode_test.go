@@ -213,7 +213,7 @@ func TestConsumeString(t *testing.T) {
 				t.Errorf("consumeString(%q, false) = (%v, %v), want (%v, %v)", tt.in, got, gotErr, tt.wantUTF8, tt.wantErrUTF8)
 			}
 
-			gotUnquote, gotErr := AppendUnquote(nil, tt.in)
+			gotUnquote, gotErr := AppendUnquote(nil, []byte(tt.in))
 			if string(gotUnquote) != tt.wantUnquote || !reflect.DeepEqual(gotErr, tt.wantErrUnquote) {
 				t.Errorf("AppendUnquote(nil, %q) = (%q, %v), want (%q, %v)", tt.in[:got], gotUnquote, gotErr, tt.wantUnquote, tt.wantErrUnquote)
 			}

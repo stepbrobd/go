@@ -249,7 +249,7 @@ func WithIndent(indent string) Options {
 
 	// Otherwise, allocate for this unique value.
 	if s := strings.Trim(indent, " \t"); len(s) > 0 {
-		panic("json: invalid character " + jsonwire.QuoteRune(s) + " in indent")
+		panic("json: invalid character " + jsonwire.QuoteRune([]byte(s)) + " in indent")
 	}
 	return jsonopts.Indent(indent)
 }
@@ -264,7 +264,7 @@ func WithIndent(indent string) Options {
 // Use of this option implies [Multiline] being set to true.
 func WithIndentPrefix(prefix string) Options {
 	if s := strings.Trim(prefix, " \t"); len(s) > 0 {
-		panic("json: invalid character " + jsonwire.QuoteRune(s) + " in indent prefix")
+		panic("json: invalid character " + jsonwire.QuoteRune([]byte(s)) + " in indent prefix")
 	}
 	return jsonopts.IndentPrefix(prefix)
 }
