@@ -39,6 +39,20 @@ var errInvalidToken = errors.New("invalid jsontext.Token")
 // A Token cannot represent entire array or object values, while a [Value] can.
 // There is no Token to represent commas and colons since
 // these structural tokens can be inferred from the surrounding context.
+//
+// A Token stores data in one of two forms:
+//
+//   - As raw JSON text: backed by the internal buffer of the [Decoder]
+//     and only ever produced by [Decoder.ReadToken].
+//     Such a token is only valid until the next call to any method on that
+//     [Decoder] (e.g., [Decoder.PeekKind], [Decoder.ReadToken],
+//     [Decoder.ReadValue], or [Decoder.SkipValue]).
+//     Call [Token.Clone] to copy the raw text into an independent allocation
+//     that persists beyond subsequent [Decoder] calls.
+//
+//   - As a typed Go value: a self-contained representation produced by
+//     the constructor functions (e.g., [String], [Int], [Uint], [Float]).
+//     Such tokens are valid indefinitely and do not need to be cloned.
 type Token struct {
 	nonComparable
 
@@ -188,8 +202,10 @@ func Uint(n uint64) Token {
 	return Token{str: "u", num: uint64(n)}
 }
 
-// Clone makes a copy of the Token such that its value remains valid
-// even after a subsequent [Decoder.Read] call.
+// Clone returns a copy of the token with a value that is not backed by the
+// [Decoder] buffer and therefore remains valid past subsequent [Decoder] calls.
+// It has no effect on tokens produced by constructor functions,
+// since those are already self-contained.
 func (t Token) Clone() Token {
 	// TODO: Allow caller to avoid any allocations?
 	if raw := t.raw; raw != nil {
@@ -213,6 +229,7 @@ func (t Token) Clone() Token {
 			}
 		}
 
+		// This only ever needs to clone strings and numbers.
 		if uint64(raw.previousOffsetStart()) != t.num {
 			panic(invalidTokenPanic)
 		}
