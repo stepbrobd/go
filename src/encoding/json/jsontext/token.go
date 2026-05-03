@@ -381,7 +381,7 @@ func (t Token) float(bits int) (float64, error) {
 		if Kind(buf[0]).normalize() == '0' {
 			fv, err := strconv.ParseFloat(string(buf), bits)
 			if err != nil {
-				err = &SyntacticError{Err: errors.Unwrap(err)} // only ever ErrRange
+				err = &numError{accessor: "Float", value: t.String(), err: errors.Unwrap(err)} // only ever ErrRange
 			}
 			return fv, err
 		}
@@ -393,7 +393,7 @@ func (t Token) float(bits int) (float64, error) {
 		case 'f':
 			f64 := float64(math.Float64frombits(uint64(t.num)))
 			if bits == 32 && !math.IsInf(f64, 0) && math.IsInf(float64(float32(f64)), 0) {
-				return f64, &SyntacticError{Err: strconv.ErrRange}
+				return f64, &numError{accessor: "Float", value: t.String(), err: strconv.ErrRange}
 			}
 			return f64, nil
 		case 'i':
@@ -443,7 +443,7 @@ func (t Token) Int() (int64, error) {
 			// Prospectively parse a negative integer.
 			switch abs, ok := jsonwire.ParseUint(buf[len("-"):]); {
 			case abs > -minInt64:
-				return minInt64, &SyntacticError{Err: strconv.ErrRange}
+				return minInt64, &numError{accessor: "Int", value: t.String(), err: strconv.ErrRange}
 			case ok:
 				return -1 * int64(abs), nil
 			}
@@ -451,7 +451,7 @@ func (t Token) Int() (int64, error) {
 			// Prospectively parse a non-negative integer.
 			switch abs, ok := jsonwire.ParseUint(buf); {
 			case abs > +maxInt64:
-				return maxInt64, &SyntacticError{Err: strconv.ErrRange}
+				return maxInt64, &numError{accessor: "Int", value: t.String(), err: strconv.ErrRange}
 			case ok:
 				return +1 * int64(abs), nil
 			}
@@ -459,7 +459,7 @@ func (t Token) Int() (int64, error) {
 		// This is not a signed integer, which implies ErrSyntax.
 		if Kind(buf[0]).normalize() == '0' {
 			f64, _ := strconv.ParseFloat(string(buf), 64)
-			return f64toi64(f64), &SyntacticError{Err: strconv.ErrSyntax}
+			return f64toi64(f64), &numError{accessor: "Int", value: t.String(), err: strconv.ErrSyntax}
 		}
 	} else if t.num != 0 {
 		// Handle typed Go number value.
@@ -468,7 +468,7 @@ func (t Token) Int() (int64, error) {
 			return int64(t.num), nil
 		case 'u':
 			if t.num > maxInt64 {
-				return maxInt64, &SyntacticError{Err: strconv.ErrRange}
+				return maxInt64, &numError{accessor: "Int", value: t.String(), err: strconv.ErrRange}
 			}
 			return int64(t.num), nil
 		case 'f', 'F':
@@ -478,9 +478,9 @@ func (t Token) Int() (int64, error) {
 			}
 			switch i64 := f64toi64(f64); {
 			case math.IsNaN(f64), math.Trunc(f64) != f64:
-				return i64, &SyntacticError{Err: strconv.ErrSyntax}
+				return i64, &numError{accessor: "Int", value: t.String(), err: strconv.ErrSyntax}
 			case (i64 == minInt64 && f64 < minInt64) || (i64 == maxInt64 && f64 > maxInt64):
-				return i64, &SyntacticError{Err: strconv.ErrRange}
+				return i64, &numError{accessor: "Int", value: t.String(), err: strconv.ErrRange}
 			default:
 				return i64, nil
 			}
@@ -533,12 +533,12 @@ func (t Token) Uint() (uint64, error) {
 		case ok:
 			return abs, nil
 		case abs == maxUint64: // implies overflows
-			return maxUint64, &SyntacticError{Err: strconv.ErrRange}
+			return maxUint64, &numError{accessor: "Uint", value: t.String(), err: strconv.ErrRange}
 		}
 		// This is not an unsigned integer, which implies ErrSyntax.
 		if Kind(buf[0]).normalize() == '0' {
 			f64, _ := strconv.ParseFloat(string(buf), 64)
-			return f64tou64(f64), &SyntacticError{Err: strconv.ErrSyntax}
+			return f64tou64(f64), &numError{accessor: "Uint", value: t.String(), err: strconv.ErrSyntax}
 		}
 	} else if t.num != 0 {
 		// Handle typed Go number value.
@@ -547,7 +547,7 @@ func (t Token) Uint() (uint64, error) {
 			return t.num, nil
 		case 'i':
 			if int64(t.num) < minUint64 {
-				return minUint64, &SyntacticError{Err: strconv.ErrSyntax}
+				return minUint64, &numError{accessor: "Uint", value: t.String(), err: strconv.ErrSyntax}
 			}
 			return uint64(int64(t.num)), nil
 		case 'f', 'F':
@@ -557,9 +557,9 @@ func (t Token) Uint() (uint64, error) {
 			}
 			switch u64 := f64tou64(f64); {
 			case math.IsNaN(f64), math.Trunc(f64) != f64, math.Signbit(f64):
-				return u64, &SyntacticError{Err: strconv.ErrSyntax}
+				return u64, &numError{accessor: "Uint", value: t.String(), err: strconv.ErrSyntax}
 			case (u64 == minUint64 && f64 < minUint64) || (u64 == maxUint64 && f64 > maxUint64):
-				return u64, &SyntacticError{Err: strconv.ErrRange}
+				return u64, &numError{accessor: "Uint", value: t.String(), err: strconv.ErrRange}
 			default:
 				return u64, nil
 			}
