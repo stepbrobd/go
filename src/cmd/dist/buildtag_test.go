@@ -22,16 +22,16 @@ var buildParserTests = []struct {
 	{"gc || gccgo", true, nil},
 	{"gc || (gccgo && !gccgo)", true, nil},
 	{"gc && (gccgo || !gccgo)", true, nil},
-	{"gccgo && gc || gc", false, nil}, // TODO: should be true
+	{"gccgo && gc || gc", true, nil},
 	{"!(gc && (gccgo || !gccgo))", false, nil},
 	{"gccgo || gc", true, nil},
 	{"!(!(!(gccgo || gc)))", false, nil},
 	{"compiler_bootstrap", false, nil},
 	{"cmd_go_bootstrap", true, nil},
-	{"syntax(error", false, fmt.Errorf("parsing //go:build line: unexpected (")},
-	{"(gc", false, fmt.Errorf("parsing //go:build line: missing )")},
-	{"gc gc", false, fmt.Errorf("parsing //go:build line: unexpected tag")},
-	{"(gc))", false, fmt.Errorf("parsing //go:build line: unexpected )")},
+	{"syntax(error", false, fmt.Errorf("parsing //go:build line: unexpected token (")},
+	{"(gc", false, fmt.Errorf("parsing //go:build line: missing close paren")},
+	{"gc gc", false, fmt.Errorf("parsing //go:build line: unexpected token gc")},
+	{"(gc))", false, fmt.Errorf("parsing //go:build line: unexpected token )")},
 }
 
 func TestBuildParser(t *testing.T) {
