@@ -22,6 +22,7 @@ var buildParserTests = []struct {
 	{"gc || gccgo", true, nil},
 	{"gc || (gccgo && !gccgo)", true, nil},
 	{"gc && (gccgo || !gccgo)", true, nil},
+	{"gccgo && gc || gc", false, nil}, // TODO: should be true
 	{"!(gc && (gccgo || !gccgo))", false, nil},
 	{"gccgo || gc", true, nil},
 	{"!(!(!(gccgo || gc)))", false, nil},
