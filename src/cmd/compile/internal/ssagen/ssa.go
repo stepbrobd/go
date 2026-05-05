@@ -4549,6 +4549,8 @@ func (s *state) assignWhichMayOverlap(left ir.Node, right *ssa.Value, deref bool
 				return
 			}
 			if t.Size() == 0 {
+				len := s.constInt(types.Types[types.TINT], n)
+				s.boundsCheck(i, len, ssa.BoundsIndex, false)
 				return
 			}
 
