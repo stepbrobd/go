@@ -63,6 +63,12 @@ func main() {
 	if err := os.WriteFile(tablefile, mustFormat(generateTable(sizeToSizeClass)), 0666); err != nil {
 		log.Fatal(err)
 	}
+
+	benchmarkFile := "../malloc_bench_generated_test.go"
+	if err := os.WriteFile(benchmarkFile, mustFormat(append(inline(benchmarkConfig(classes, sizeToSizeClass)), []byte(generateTopBenchmark(classes, sizeToSizeClass))...)), 0666); err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 // withLineNumbers returns b with line numbers added to help debugging.
@@ -658,4 +664,71 @@ var mallocNoScanTable = [513]func(size uintptr, typ *_type, needzero bool) unsaf
 }`)
 
 	return b.Bytes()
+}
+
+// benchmarkConfig produces an inlining config to stamp out microbenchmarks.
+func benchmarkConfig(classes []class, sizeToSizeClass []uint8) generatorConfig {
+	config := generatorConfig{file: "../malloc_stubs_test.go"}
+
+	// Only generate specialized functions for sizes that don't have
+	// a header on 64-bit platforms. (They may have a header on 32-bit, but
+	// we will fall back to the non-specialized versions in that case)
+	scMax := sizeToSizeClass[smallScanNoHeaderMax]
+
+	str := fmt.Sprint
+
+	for sc := uint8(1); sc <= scMax; sc++ {
+		elemsize := classes[sc].size
+		config.specs = append(config.specs, spec{
+			templateFunc: "benchmarkStub",
+			name:         fmt.Sprintf("benchmarkMallocgcNoscan%d", elemsize),
+			ops: []op{
+				{subBasicLit, "size_", str(elemsize)},
+				{foldCondition, "noscan_", str(true)},
+			},
+		})
+		config.specs = append(config.specs, spec{
+			templateFunc: "benchmarkStub",
+			name:         fmt.Sprintf("benchmarkMallocgcScan%d", elemsize),
+			ops: []op{
+				{subBasicLit, "size_", str(elemsize)},
+				{foldCondition, "noscan_", str(false)},
+			},
+		})
+	}
+
+	for size := 1; size < tinySize; size++ {
+		config.specs = append(config.specs, spec{
+			templateFunc: "benchmarkStubTiny",
+			name:         fmt.Sprintf("benchmarkMallocgcTiny%d", size),
+			ops:          []op{{subBasicLit, "size_", str(size)}, {foldCondition, "noscan_", str(true)}},
+		})
+	}
+
+	return config
+}
+
+func generateTopBenchmark(classes []class, sizeToSizeClass []uint8) string {
+	scMax := sizeToSizeClass[smallScanNoHeaderMax]
+	bench := `func BenchmarkMallocgc(b *testing.B) {
+		b.Run("scan=noscan", func(b *testing.B) {
+`
+	for size := 1; size < tinySize; size++ {
+		bench += fmt.Sprintf(`b.Run("size=%d", benchmarkMallocgcTiny%d)`, size, size) + "\n"
+	}
+	for sc := uint8(2); sc <= scMax; sc++ {
+		elemsize := classes[sc].size
+		bench += fmt.Sprintf(`b.Run("size=%d", benchmarkMallocgcNoscan%d)`, elemsize, elemsize) + "\n"
+	}
+	bench += `})
+		b.Run("scan=scan", func(b *testing.B) {
+`
+	for sc := uint8(1); sc <= scMax; sc++ {
+		elemsize := classes[sc].size
+		bench += fmt.Sprintf(`b.Run("size=%d", benchmarkMallocgcScan%d)`, elemsize, elemsize) + "\n"
+	}
+	bench += `})
+}`
+
+	return bench
 }
