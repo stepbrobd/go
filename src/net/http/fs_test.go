@@ -839,10 +839,7 @@ func (fsys fakeFS) Open(name string) (File, error) {
 	return &fakeFile{ReadSeeker: strings.NewReader(f.contents), fi: f, path: name}, nil
 }
 
-func TestDirectoryIfNotModified(t *testing.T) {
-	// HTTP/3 trips off race detector.
-	run(t, testDirectoryIfNotModified, http3SkippedMode)
-}
+func TestDirectoryIfNotModified(t *testing.T) { run(t, testDirectoryIfNotModified) }
 func testDirectoryIfNotModified(t *testing.T, mode testMode) {
 	const indexContents = "I am a fake index.html file"
 	fileMod := time.Unix(1000000000, 0).UTC()
@@ -862,8 +859,19 @@ func testDirectoryIfNotModified(t *testing.T, mode testMode) {
 		"/index.html": indexFile,
 	}
 
-	ts := newClientServerTest(t, mode, FileServer(fs)).ts
+	modDone := make(chan struct{})
+	fsHandler := FileServer(fs)
+	ts := newClientServerTest(t, mode, HandlerFunc(func(w ResponseWriter, r *Request) {
+		fsHandler.ServeHTTP(w, r)
+		// After the first "If-Modified-Since" request, advance the /index.html
+		// file's modtime, but not the directory's
+		if r.Header.Get("If-Modified-Since") != "" && indexFile.modtime.Equal(fileMod) {
+			indexFile.modtime = indexFile.modtime.Add(1 * time.Hour)
+			close(modDone)
+		}
+	})).ts
 
+	// Initial fetch of /index.html.
 	res, err := ts.Client().Get(ts.URL)
 	if err != nil {
 		t.Fatal(err)
@@ -876,15 +884,14 @@ func testDirectoryIfNotModified(t *testing.T, mode testMode) {
 		t.Fatalf("Got body %q; want %q", b, indexContents)
 	}
 	res.Body.Close()
-
 	lastMod := res.Header.Get("Last-Modified")
 	if lastMod != fileModStr {
 		t.Fatalf("initial Last-Modified = %q; want %q", lastMod, fileModStr)
 	}
 
+	// Fetch /index.html when it has not been modified.
 	req, _ := NewRequest("GET", ts.URL, nil)
 	req.Header.Set("If-Modified-Since", lastMod)
-
 	c := ts.Client()
 	res, err = c.Do(req)
 	if err != nil {
@@ -895,9 +902,8 @@ func testDirectoryIfNotModified(t *testing.T, mode testMode) {
 	}
 	res.Body.Close()
 
-	// Advance the index.html file's modtime, but not the directory's.
-	indexFile.modtime = indexFile.modtime.Add(1 * time.Hour)
-
+	// Fetch /index.html after it has been modified.
+	<-modDone
 	res, err = c.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -916,10 +922,7 @@ func mustStat(t *testing.T, fileName string) fs.FileInfo {
 	return fi
 }
 
-func TestServeContent(t *testing.T) {
-	// HTTP/3 trips off race detector.
-	run(t, testServeContent, http3SkippedMode)
-}
+func TestServeContent(t *testing.T) { run(t, testServeContent) }
 func testServeContent(t *testing.T, mode testMode) {
 	type serveParam struct {
 		name        string
@@ -1170,21 +1173,24 @@ func testServeContent(t *testing.T, mode testMode) {
 		},
 	}
 	for testName, tt := range tests {
-		var content io.ReadSeeker
-		if tt.file != "" {
-			f, err := os.Open(tt.file)
-			if err != nil {
-				t.Fatalf("test %q: %v", testName, err)
+		var contentBytes []byte
+		if sr, ok := tt.content.(*strings.Reader); ok {
+			var err error
+			if contentBytes, err = io.ReadAll(sr); err != nil {
+				t.Fatal(err)
 			}
-			defer f.Close()
-			content = f
-		} else {
-			content = tt.content
 		}
 		for _, method := range []string{"GET", "HEAD"} {
-			//restore content in case it is consumed by previous method
-			if content, ok := content.(*strings.Reader); ok {
-				content.Seek(0, io.SeekStart)
+			var content io.ReadSeeker
+			if tt.file != "" {
+				f, err := os.Open(tt.file)
+				if err != nil {
+					t.Fatalf("test %q: %v", testName, err)
+				}
+				defer f.Close()
+				content = f
+			} else {
+				content = strings.NewReader(string(contentBytes))
 			}
 
 			servec <- serveParam{
