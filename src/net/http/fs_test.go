@@ -709,27 +709,24 @@ func testServeIndexHtmlFS(t *testing.T, mode testMode) {
 	}
 }
 
-func TestFileServerZeroByte(t *testing.T) { run(t, testFileServerZeroByte, http3SkippedMode) }
+func TestFileServerZeroByte(t *testing.T) { run(t, testFileServerZeroByte) }
 func testFileServerZeroByte(t *testing.T, mode testMode) {
-	ts := newClientServerTest(t, mode, FileServer(Dir("."))).ts
+	cst := newClientServerTest(t, mode, FileServer(Dir(".")))
 
-	c, err := net.Dial("tcp", ts.Listener.Addr().String())
+	req, err := NewRequest("GET", cst.ts.URL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer c.Close()
-	_, err = fmt.Fprintf(c, "GET /..\x00 HTTP/1.0\r\n\r\n")
+	req.URL.Path = "/..\x00"
+
+	res, err := cst.c.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var got bytes.Buffer
-	bufr := bufio.NewReader(io.TeeReader(c, &got))
-	res, err := ReadResponse(bufr, nil)
-	if err != nil {
-		t.Fatal("ReadResponse: ", err)
-	}
+	defer res.Body.Close()
+
 	if res.StatusCode == 200 {
-		t.Errorf("got status 200; want an error. Body is:\n%s", got.Bytes())
+		t.Errorf("got status 200; want an error")
 	}
 }
 
